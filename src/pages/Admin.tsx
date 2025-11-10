@@ -81,8 +81,9 @@ const Admin = () => {
     image_url: "",
     is_available: true,
   });
+
   const [imageFile, setImageFile] = useState<File | null>(null);
-  const [uploadingImage, setUploadingImage] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     checkAdminAccess();
@@ -193,12 +194,13 @@ const Admin = () => {
       image_url: item.image_url || "",
       is_available: item.is_available,
     });
+    setImageFile(null);
     setDialogOpen(true);
   };
 
-  const handleImageUpload = async (file: File): Promise<string | null> => {
+  const uploadImage = async (file: File): Promise<string | null> => {
     try {
-      setUploadingImage(true);
+      setUploading(true);
       const fileExt = file.name.split('.').pop();
       const fileName = `${Math.random().toString(36).substring(2)}-${Date.now()}.${fileExt}`;
       const filePath = `items/${fileName}`;
@@ -208,7 +210,9 @@ const Admin = () => {
         .upload(filePath, file);
 
       if (uploadError) {
-        throw uploadError;
+        console.error('Upload error:', uploadError);
+        toast.error("Erreur lors de l'upload de l'image");
+        return null;
       }
 
       const { data: { publicUrl } } = supabase.storage
@@ -218,10 +222,10 @@ const Admin = () => {
       return publicUrl;
     } catch (error) {
       console.error('Error uploading image:', error);
-      toast.error("Erreur lors de l'upload de l'image");
+      toast.error("Erreur lors de l'upload");
       return null;
     } finally {
-      setUploadingImage(false);
+      setUploading(false);
     }
   };
 
@@ -232,7 +236,7 @@ const Admin = () => {
 
     // Upload image if a file is selected
     if (imageFile) {
-      const uploadedUrl = await handleImageUpload(imageFile);
+      const uploadedUrl = await uploadImage(imageFile);
       if (uploadedUrl) {
         imageUrl = uploadedUrl;
       } else {
@@ -415,7 +419,7 @@ const Admin = () => {
                               setFormData({ ...formData, image_url: "" });
                             }
                           }}
-                          disabled={uploadingImage}
+                          disabled={uploading}
                         />
                         {imageFile && (
                           <p className="text-sm text-muted-foreground mt-1">
@@ -449,7 +453,7 @@ const Admin = () => {
                             }
                           }}
                           placeholder="https://..."
-                          disabled={uploadingImage || !!imageFile}
+                          disabled={uploading || !!imageFile}
                         />
                       </div>
                     </div>
@@ -463,8 +467,8 @@ const Admin = () => {
                       <Label htmlFor="is_available">Article disponible</Label>
                     </div>
 
-                    <Button type="submit" className="w-full" disabled={uploadingImage}>
-                      {uploadingImage ? "Upload en cours..." : editingItem ? "Modifier" : "Ajouter"}
+                    <Button type="submit" className="w-full" disabled={uploading}>
+                      {uploading ? "Upload en cours..." : editingItem ? "Modifier" : "Ajouter"}
                     </Button>
                   </form>
                 </DialogContent>
@@ -481,7 +485,7 @@ const Admin = () => {
                   <div className="flex flex-col md:flex-row">
                     <div className="md:w-48 h-48 bg-gradient-to-br from-primary/10 to-accent/10 overflow-hidden">
                       <img 
-                        src={menuImages[item.name] || tajineImage}
+                        src={item.image_url || menuImages[item.name] || tajineImage}
                         alt={item.name}
                         className="w-full h-full object-cover"
                       />
