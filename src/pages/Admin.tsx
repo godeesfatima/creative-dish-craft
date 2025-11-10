@@ -8,8 +8,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, LogOut, Home } from "lucide-react";
+import { Plus, Pencil, Trash2, LogOut, Home, CheckCircle, XCircle, Calendar, Clock, Users, Mail, Phone } from "lucide-react";
 import { Link } from "react-router-dom";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import tajineImage from "@/assets/tajine-poulet.jpg";
 import couscousImage from "@/assets/couscous-royal.jpg";
 import pastillaImage from "@/assets/pastilla.jpg";
@@ -50,8 +51,22 @@ interface MenuItem {
   is_available: boolean;
 }
 
+interface Reservation {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  date: string;
+  time: string;
+  guests: number;
+  special_requests: string | null;
+  status: string;
+  created_at: string;
+}
+
 const Admin = () => {
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
+  const [reservations, setReservations] = useState<Reservation[]>([]);
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -70,6 +85,7 @@ const Admin = () => {
   useEffect(() => {
     checkAdminAccess();
     fetchMenuItems();
+    fetchReservations();
   }, []);
 
   const checkAdminAccess = async () => {
@@ -104,6 +120,46 @@ const Admin = () => {
       .order('category', { ascending: true });
     
     if (data) setMenuItems(data);
+  };
+
+  const fetchReservations = async () => {
+    const { data } = await (supabase as any)
+      .from('reservations')
+      .select('*')
+      .order('date', { ascending: false })
+      .order('time', { ascending: false });
+    
+    if (data) setReservations(data);
+  };
+
+  const handleReservationStatus = async (id: string, status: 'confirmed' | 'cancelled') => {
+    const { error } = await (supabase as any)
+      .from('reservations')
+      .update({ status })
+      .eq('id', id);
+
+    if (error) {
+      toast.error("Erreur lors de la mise à jour");
+    } else {
+      toast.success(status === 'confirmed' ? "Réservation confirmée!" : "Réservation annulée");
+      fetchReservations();
+    }
+  };
+
+  const handleDeleteReservation = async (id: string) => {
+    if (!confirm("Êtes-vous sûr de vouloir supprimer cette réservation?")) return;
+
+    const { error } = await (supabase as any)
+      .from('reservations')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      toast.error("Erreur lors de la suppression");
+    } else {
+      toast.success("Réservation supprimée!");
+      fetchReservations();
+    }
   };
 
   const handleLogout = async () => {
@@ -225,146 +281,263 @@ const Admin = () => {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="flex justify-between items-center mb-8">
-          <h2 className="text-2xl font-semibold">Gestion du Menu</h2>
-          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-            <DialogTrigger asChild>
-              <Button onClick={resetForm}>
-                <Plus className="mr-2 h-4 w-4" />
-                Ajouter un Article
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle>
-                  {editingItem ? "Modifier l'Article" : "Nouvel Article"}
-                </DialogTitle>
-              </DialogHeader>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <Label htmlFor="name">Nom *</Label>
-                  <Input
-                    id="name"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    required
-                  />
-                </div>
+        <Tabs defaultValue="menu" className="w-full">
+          <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 mb-8">
+            <TabsTrigger value="menu">Gestion du Menu</TabsTrigger>
+            <TabsTrigger value="reservations">Réservations</TabsTrigger>
+          </TabsList>
 
-                <div>
-                  <Label htmlFor="description">Description</Label>
-                  <Textarea
-                    id="description"
-                    value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    rows={3}
-                  />
-                </div>
+          <TabsContent value="menu">
+            <div className="flex justify-between items-center mb-8">
+              <h2 className="text-2xl font-semibold">Gestion du Menu</h2>
+              <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button onClick={resetForm}>
+                    <Plus className="mr-2 h-4 w-4" />
+                    Ajouter un Article
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle>
+                      {editingItem ? "Modifier l'Article" : "Nouvel Article"}
+                    </DialogTitle>
+                  </DialogHeader>
+                  <form onSubmit={handleSubmit} className="space-y-4">
+                    <div>
+                      <Label htmlFor="name">Nom *</Label>
+                      <Input
+                        id="name"
+                        value={formData.name}
+                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                        required
+                      />
+                    </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="price">Prix (DH) *</Label>
-                    <Input
-                      id="price"
-                      type="number"
-                      step="0.01"
-                      value={formData.price}
-                      onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                      required
-                    />
-                  </div>
+                    <div>
+                      <Label htmlFor="description">Description</Label>
+                      <Textarea
+                        id="description"
+                        value={formData.description}
+                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                        rows={3}
+                      />
+                    </div>
 
-                  <div>
-                    <Label htmlFor="category">Catégorie *</Label>
-                    <Select
-                      value={formData.category}
-                      onValueChange={(value) => setFormData({ ...formData, category: value })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Entrées">Entrées</SelectItem>
-                        <SelectItem value="Plats Principaux">Plats Principaux</SelectItem>
-                        <SelectItem value="Desserts">Desserts</SelectItem>
-                        <SelectItem value="Boissons">Boissons</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                <div>
-                  <Label htmlFor="image_url">URL de l'Image</Label>
-                  <Input
-                    id="image_url"
-                    type="url"
-                    value={formData.image_url}
-                    onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
-                    placeholder="https://..."
-                  />
-                </div>
-
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="is_available"
-                    checked={formData.is_available}
-                    onCheckedChange={(checked) => setFormData({ ...formData, is_available: checked })}
-                  />
-                  <Label htmlFor="is_available">Article disponible</Label>
-                </div>
-
-                <Button type="submit" className="w-full">
-                  {editingItem ? "Modifier" : "Ajouter"}
-                </Button>
-              </form>
-            </DialogContent>
-          </Dialog>
-        </div>
-
-        <div className="grid gap-6">
-          {menuItems.map((item, index) => (
-            <Card 
-              key={item.id} 
-              className="overflow-hidden hover:shadow-card-hover transition-all duration-300 animate-fade-in"
-              style={{ animationDelay: `${index * 50}ms` }}
-            >
-              <div className="flex flex-col md:flex-row">
-                <div className="md:w-48 h-48 bg-gradient-to-br from-primary/10 to-accent/10 overflow-hidden">
-                  <img 
-                    src={menuImages[item.name] || tajineImage}
-                    alt={item.name}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                <div className="flex-1 p-6">
-                  <div className="flex justify-between items-start">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-3">
-                        <h3 className="text-2xl font-semibold">{item.name}</h3>
-                        <span className={`px-3 py-1 rounded-full text-sm font-medium ${item.is_available ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                          {item.is_available ? 'Disponible' : 'Indisponible'}
-                        </span>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="price">Prix (DH) *</Label>
+                        <Input
+                          id="price"
+                          type="number"
+                          step="0.01"
+                          value={formData.price}
+                          onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                          required
+                        />
                       </div>
-                      <p className="text-muted-foreground mb-4 leading-relaxed">{item.description}</p>
-                      <div className="flex gap-6 text-base">
-                        <span className="font-bold text-primary text-xl">{item.price} DH</span>
-                        <span className="text-muted-foreground">📍 {item.category}</span>
+
+                      <div>
+                        <Label htmlFor="category">Catégorie *</Label>
+                        <Select
+                          value={formData.category}
+                          onValueChange={(value) => setFormData({ ...formData, category: value })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Entrées">Entrées</SelectItem>
+                            <SelectItem value="Plats Principaux">Plats Principaux</SelectItem>
+                            <SelectItem value="Desserts">Desserts</SelectItem>
+                            <SelectItem value="Boissons">Boissons</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </div>
                     </div>
-                    <div className="flex gap-2 ml-4">
-                      <Button variant="outline" size="icon" onClick={() => handleEdit(item)} className="hover-scale">
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button variant="destructive" size="icon" onClick={() => handleDelete(item.id)} className="hover-scale">
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+
+                    <div>
+                      <Label htmlFor="image_url">URL de l'Image</Label>
+                      <Input
+                        id="image_url"
+                        type="url"
+                        value={formData.image_url}
+                        onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
+                        placeholder="https://..."
+                      />
+                    </div>
+
+                    <div className="flex items-center space-x-2">
+                      <Switch
+                        id="is_available"
+                        checked={formData.is_available}
+                        onCheckedChange={(checked) => setFormData({ ...formData, is_available: checked })}
+                      />
+                      <Label htmlFor="is_available">Article disponible</Label>
+                    </div>
+
+                    <Button type="submit" className="w-full">
+                      {editingItem ? "Modifier" : "Ajouter"}
+                    </Button>
+                  </form>
+                </DialogContent>
+              </Dialog>
+            </div>
+
+            <div className="grid gap-6">
+              {menuItems.map((item, index) => (
+                <Card 
+                  key={item.id} 
+                  className="overflow-hidden hover:shadow-card-hover transition-all duration-300 animate-fade-in"
+                  style={{ animationDelay: `${index * 50}ms` }}
+                >
+                  <div className="flex flex-col md:flex-row">
+                    <div className="md:w-48 h-48 bg-gradient-to-br from-primary/10 to-accent/10 overflow-hidden">
+                      <img 
+                        src={menuImages[item.name] || tajineImage}
+                        alt={item.name}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <div className="flex-1 p-6">
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-3">
+                            <h3 className="text-2xl font-semibold">{item.name}</h3>
+                            <span className={`px-3 py-1 rounded-full text-sm font-medium ${item.is_available ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                              {item.is_available ? 'Disponible' : 'Indisponible'}
+                            </span>
+                          </div>
+                          <p className="text-muted-foreground mb-4 leading-relaxed">{item.description}</p>
+                          <div className="flex gap-6 text-base">
+                            <span className="font-bold text-primary text-xl">{item.price} DH</span>
+                            <span className="text-muted-foreground">📍 {item.category}</span>
+                          </div>
+                        </div>
+                        <div className="flex gap-2 ml-4">
+                          <Button variant="outline" size="icon" onClick={() => handleEdit(item)} className="hover-scale">
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button variant="destructive" size="icon" onClick={() => handleDelete(item.id)} className="hover-scale">
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </div>
-            </Card>
-          ))}
-        </div>
+                </Card>
+              ))}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="reservations">
+            <div className="mb-8">
+              <h2 className="text-2xl font-semibold">Gestion des Réservations</h2>
+              <p className="text-muted-foreground mt-2">
+                {reservations.length} réservation{reservations.length > 1 ? 's' : ''} au total
+              </p>
+            </div>
+
+            <div className="grid gap-6">
+              {reservations.length === 0 ? (
+                <Card className="p-12 text-center">
+                  <Calendar className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                  <p className="text-muted-foreground text-lg">Aucune réservation pour le moment</p>
+                </Card>
+              ) : (
+                reservations.map((reservation, index) => (
+                  <Card 
+                    key={reservation.id} 
+                    className="overflow-hidden hover:shadow-card-hover transition-all duration-300 animate-fade-in"
+                    style={{ animationDelay: `${index * 50}ms` }}
+                  >
+                    <div className="p-6">
+                      <div className="flex justify-between items-start mb-4">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-3">
+                            <h3 className="text-2xl font-semibold">{reservation.name}</h3>
+                            <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                              reservation.status === 'confirmed' ? 'bg-green-100 text-green-800' :
+                              reservation.status === 'cancelled' ? 'bg-red-100 text-red-800' :
+                              'bg-yellow-100 text-yellow-800'
+                            }`}>
+                              {reservation.status === 'confirmed' ? 'Confirmée' :
+                               reservation.status === 'cancelled' ? 'Annulée' : 'En attente'}
+                            </span>
+                          </div>
+                          
+                          <div className="grid md:grid-cols-2 gap-4 text-muted-foreground">
+                            <div className="flex items-center gap-2">
+                              <Mail className="h-4 w-4" />
+                              <span>{reservation.email}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Phone className="h-4 w-4" />
+                              <span>{reservation.phone}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Calendar className="h-4 w-4" />
+                              <span>{new Date(reservation.date).toLocaleDateString('fr-FR')}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Clock className="h-4 w-4" />
+                              <span>{reservation.time}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Users className="h-4 w-4" />
+                              <span>{reservation.guests} personne{reservation.guests > 1 ? 's' : ''}</span>
+                            </div>
+                          </div>
+
+                          {reservation.special_requests && (
+                            <div className="mt-4 p-3 bg-muted/50 rounded-lg">
+                              <p className="text-sm font-medium mb-1">Demandes spéciales:</p>
+                              <p className="text-sm text-muted-foreground">{reservation.special_requests}</p>
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="flex gap-2 ml-4">
+                          {reservation.status !== 'confirmed' && (
+                            <Button 
+                              variant="outline" 
+                              size="icon"
+                              onClick={() => handleReservationStatus(reservation.id, 'confirmed')}
+                              className="hover-scale text-green-600 hover:text-green-700 hover:bg-green-50"
+                              title="Confirmer"
+                            >
+                              <CheckCircle className="h-4 w-4" />
+                            </Button>
+                          )}
+                          {reservation.status !== 'cancelled' && (
+                            <Button 
+                              variant="outline" 
+                              size="icon"
+                              onClick={() => handleReservationStatus(reservation.id, 'cancelled')}
+                              className="hover-scale text-orange-600 hover:text-orange-700 hover:bg-orange-50"
+                              title="Annuler"
+                            >
+                              <XCircle className="h-4 w-4" />
+                            </Button>
+                          )}
+                          <Button 
+                            variant="destructive" 
+                            size="icon" 
+                            onClick={() => handleDeleteReservation(reservation.id)}
+                            className="hover-scale"
+                            title="Supprimer"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </Card>
+                ))
+              )}
+            </div>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
