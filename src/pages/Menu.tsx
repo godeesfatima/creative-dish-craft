@@ -11,6 +11,7 @@ import pastillaImage from "@/assets/pastilla.jpg";
 import hariraImage from "@/assets/harira.jpg";
 import theImage from "@/assets/the-menthe.jpg";
 import gazellImage from "@/assets/cornes-gazelle.jpg";
+import menuBg from "@/assets/menu-bg.jpg";
 
 const menuImages: Record<string, string> = {
   'Tajine Poulet': tajineImage,
@@ -57,17 +58,24 @@ const Menu = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-secondary/30">
       {/* Header */}
-      <section className="relative bg-hero-gradient py-28 px-4 overflow-hidden">
-        <div className="absolute inset-0 bg-black/20" />
+      <section className="relative py-28 px-4 overflow-hidden">
+        <div className="absolute inset-0">
+          <img 
+            src={menuBg} 
+            alt="Restaurant" 
+            className="w-full h-full object-cover animate-slow-zoom"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/60 to-black/70" />
+        </div>
         <div className="relative z-10 max-w-6xl mx-auto">
           <Link to="/">
-            <Button variant="ghost" className="mb-6 text-white hover:bg-white/20">
+            <Button variant="ghost" className="mb-6 text-white hover:bg-white/20 hover-scale">
               <Home className="mr-2 h-4 w-4" />
               Retour
             </Button>
           </Link>
-          <h1 className="text-6xl font-bold text-white mb-6 animate-fade-in">Notre Menu</h1>
-          <p className="text-2xl text-white/90 animate-fade-in animation-delay-200">Découvrez nos délicieuses spécialités</p>
+          <h1 className="text-6xl font-bold text-white mb-6 animate-fade-in drop-shadow-2xl">Notre Menu</h1>
+          <p className="text-2xl text-white/90 animate-fade-in animation-delay-200 drop-shadow-lg">Découvrez nos délicieuses spécialités</p>
         </div>
       </section>
 

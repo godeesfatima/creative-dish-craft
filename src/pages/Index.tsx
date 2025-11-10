@@ -56,9 +56,9 @@ const Index = () => {
                 Voir le Menu
               </Button>
             </Link>
-            <Link to="/auth">
+            <Link to="/reservation">
               <Button size="lg" variant="outline" className="bg-white/10 text-white border-2 border-white hover:bg-white hover:text-primary text-lg px-8 py-6 backdrop-blur-sm hover-scale transition-all duration-300">
-                Espace Admin
+                Réserver une Table
               </Button>
             </Link>
           </div>
