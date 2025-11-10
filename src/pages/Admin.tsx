@@ -81,6 +81,8 @@ const Admin = () => {
     image_url: "",
     is_available: true,
   });
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   useEffect(() => {
     checkAdminAccess();
@@ -178,6 +180,7 @@ const Admin = () => {
       is_available: true,
     });
     setEditingItem(null);
+    setImageFile(null);
   };
 
   const handleEdit = (item: MenuItem) => {
@@ -193,15 +196,56 @@ const Admin = () => {
     setDialogOpen(true);
   };
 
+  const handleImageUpload = async (file: File): Promise<string | null> => {
+    try {
+      setUploadingImage(true);
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Math.random().toString(36).substring(2)}-${Date.now()}.${fileExt}`;
+      const filePath = `items/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('menu-images')
+        .upload(filePath, file);
+
+      if (uploadError) {
+        throw uploadError;
+      }
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('menu-images')
+        .getPublicUrl(filePath);
+
+      return publicUrl;
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      toast.error("Erreur lors de l'upload de l'image");
+      return null;
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    let imageUrl = formData.image_url;
+
+    // Upload image if a file is selected
+    if (imageFile) {
+      const uploadedUrl = await handleImageUpload(imageFile);
+      if (uploadedUrl) {
+        imageUrl = uploadedUrl;
+      } else {
+        return; // Stop if image upload failed
+      }
+    }
 
     const itemData = {
       name: formData.name,
       description: formData.description,
       price: parseFloat(formData.price),
       category: formData.category,
-      image_url: formData.image_url || null,
+      image_url: imageUrl || null,
       is_available: formData.is_available,
     };
 
@@ -356,15 +400,58 @@ const Admin = () => {
                       </div>
                     </div>
 
-                    <div>
-                      <Label htmlFor="image_url">URL de l'Image</Label>
-                      <Input
-                        id="image_url"
-                        type="url"
-                        value={formData.image_url}
-                        onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
-                        placeholder="https://..."
-                      />
+                    <div className="space-y-4">
+                      <div>
+                        <Label htmlFor="image_file">Image (PC ou Téléphone)</Label>
+                        <Input
+                          id="image_file"
+                          type="file"
+                          accept="image/jpeg,image/jpg,image/png,image/webp"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              setImageFile(file);
+                              // Clear URL field if file is selected
+                              setFormData({ ...formData, image_url: "" });
+                            }
+                          }}
+                          disabled={uploadingImage}
+                        />
+                        {imageFile && (
+                          <p className="text-sm text-muted-foreground mt-1">
+                            Fichier sélectionné: {imageFile.name}
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="relative">
+                        <div className="absolute inset-0 flex items-center">
+                          <span className="w-full border-t" />
+                        </div>
+                        <div className="relative flex justify-center text-xs uppercase">
+                          <span className="bg-background px-2 text-muted-foreground">
+                            Ou
+                          </span>
+                        </div>
+                      </div>
+
+                      <div>
+                        <Label htmlFor="image_url">URL de l'Image</Label>
+                        <Input
+                          id="image_url"
+                          type="url"
+                          value={formData.image_url}
+                          onChange={(e) => {
+                            setFormData({ ...formData, image_url: e.target.value });
+                            // Clear file if URL is entered
+                            if (e.target.value) {
+                              setImageFile(null);
+                            }
+                          }}
+                          placeholder="https://..."
+                          disabled={uploadingImage || !!imageFile}
+                        />
+                      </div>
                     </div>
 
                     <div className="flex items-center space-x-2">
@@ -376,8 +463,8 @@ const Admin = () => {
                       <Label htmlFor="is_available">Article disponible</Label>
                     </div>
 
-                    <Button type="submit" className="w-full">
-                      {editingItem ? "Modifier" : "Ajouter"}
+                    <Button type="submit" className="w-full" disabled={uploadingImage}>
+                      {uploadingImage ? "Upload en cours..." : editingItem ? "Modifier" : "Ajouter"}
                     </Button>
                   </form>
                 </DialogContent>
