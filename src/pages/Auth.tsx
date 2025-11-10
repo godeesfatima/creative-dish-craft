@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 import { z } from "zod";
+import { ChefHat, Home } from "lucide-react";
 
 const emailSchema = z.string().email("Email invalide");
 const passwordSchema = z.string().min(6, "Le mot de passe doit contenir au moins 6 caractères");
@@ -93,61 +94,87 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-secondary/30 px-4">
-      <Card className="w-full max-w-md p-8">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold mb-2">
-            {isLogin ? "Connexion Admin" : "Créer un Compte"}
-          </h1>
-          <p className="text-muted-foreground">
-            {isLogin
-              ? "Connectez-vous pour gérer le menu"
-              : "Créez un compte administrateur"}
-          </p>
-        </div>
-
-        <form onSubmit={handleAuth} className="space-y-4">
-          <div>
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="admin@restaurant.ma"
-              required
-            />
-          </div>
-
-          <div>
-            <Label htmlFor="password">Mot de passe</Label>
-            <Input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••"
-              required
-            />
-          </div>
-
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "Chargement..." : isLogin ? "Se connecter" : "Créer le compte"}
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-secondary/30 to-background px-4 py-12 relative overflow-hidden">
+      {/* Decorative elements */}
+      <div className="absolute top-0 left-0 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
+      <div className="absolute bottom-0 right-0 w-96 h-96 bg-accent/5 rounded-full blur-3xl" />
+      
+      <div className="w-full max-w-md relative z-10">
+        <Link to="/">
+          <Button variant="ghost" className="mb-6 hover-scale">
+            <Home className="mr-2 h-4 w-4" />
+            Retour au Site
           </Button>
-        </form>
+        </Link>
 
-        <div className="mt-6 text-center">
-          <button
-            type="button"
-            onClick={() => setIsLogin(!isLogin)}
-            className="text-primary hover:underline"
-          >
-            {isLogin
-              ? "Pas de compte? Créer un compte"
-              : "Déjà un compte? Se connecter"}
-          </button>
+        <Card className="p-10 shadow-card-hover animate-fade-in bg-card/80 backdrop-blur-sm">
+          <div className="text-center mb-10">
+            <div className="inline-flex p-4 bg-primary/10 rounded-full mb-6">
+              <ChefHat className="h-12 w-12 text-primary" />
+            </div>
+            <h1 className="text-4xl font-bold mb-3">
+              {isLogin ? "Connexion Admin" : "Créer un Compte"}
+            </h1>
+            <p className="text-muted-foreground text-lg">
+              {isLogin
+                ? "Connectez-vous pour gérer le menu"
+                : "Créez un compte administrateur"}
+            </p>
+          </div>
+
+          <form onSubmit={handleAuth} className="space-y-6">
+            <div className="space-y-2">
+              <Label htmlFor="email" className="text-base">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="admin@restaurant.ma"
+                required
+                className="h-12 text-base"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="password" className="text-base">Mot de passe</Label>
+              <Input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••"
+                required
+                className="h-12 text-base"
+              />
+            </div>
+
+            <Button 
+              type="submit" 
+              className="w-full h-12 text-base hover-scale" 
+              disabled={loading}
+            >
+              {loading ? "Chargement..." : isLogin ? "Se connecter" : "Créer le compte"}
+            </Button>
+          </form>
+
+          <div className="mt-8 text-center">
+            <button
+              type="button"
+              onClick={() => setIsLogin(!isLogin)}
+              className="text-primary hover:underline font-medium text-base"
+            >
+              {isLogin
+                ? "Pas de compte? Créer un compte"
+                : "Déjà un compte? Se connecter"}
+            </button>
+          </div>
+        </Card>
+
+        <div className="mt-6 text-center text-sm text-muted-foreground animate-fade-in animation-delay-200">
+          <p>💡 Après l'inscription, contactez l'administrateur principal pour obtenir les droits admin</p>
         </div>
-      </Card>
+      </div>
     </div>
   );
 };

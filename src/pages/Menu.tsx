@@ -2,7 +2,24 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { UtensilsCrossed } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Home } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import tajineImage from "@/assets/tajine-poulet.jpg";
+import couscousImage from "@/assets/couscous-royal.jpg";
+import pastillaImage from "@/assets/pastilla.jpg";
+import hariraImage from "@/assets/harira.jpg";
+import theImage from "@/assets/the-menthe.jpg";
+import gazellImage from "@/assets/cornes-gazelle.jpg";
+
+const menuImages: Record<string, string> = {
+  'Tajine Poulet': tajineImage,
+  'Couscous Royal': couscousImage,
+  'Pastilla au Poulet': pastillaImage,
+  'Harira': hariraImage,
+  'Thé à la Menthe': theImage,
+  'Cornes de Gazelle': gazellImage,
+};
 
 interface MenuItem {
   id: string;
@@ -38,24 +55,32 @@ const Menu = () => {
     : menuItems.filter(item => item.category === selectedCategory);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-b from-background to-secondary/30">
       {/* Header */}
-      <section className="bg-hero-gradient py-20 px-4">
-        <div className="max-w-6xl mx-auto text-center">
-          <h1 className="text-5xl font-bold text-white mb-4">Notre Menu</h1>
-          <p className="text-xl text-white/90">Découvrez nos délicieuses spécialités</p>
+      <section className="relative bg-hero-gradient py-28 px-4 overflow-hidden">
+        <div className="absolute inset-0 bg-black/20" />
+        <div className="relative z-10 max-w-6xl mx-auto">
+          <Link to="/">
+            <Button variant="ghost" className="mb-6 text-white hover:bg-white/20">
+              <Home className="mr-2 h-4 w-4" />
+              Retour
+            </Button>
+          </Link>
+          <h1 className="text-6xl font-bold text-white mb-6 animate-fade-in">Notre Menu</h1>
+          <p className="text-2xl text-white/90 animate-fade-in animation-delay-200">Découvrez nos délicieuses spécialités</p>
         </div>
       </section>
 
       {/* Category Filter */}
-      <section className="py-8 px-4 bg-white border-b">
+      <section className="py-10 px-4 bg-white/80 backdrop-blur-sm border-b sticky top-0 z-20 shadow-md">
         <div className="max-w-6xl mx-auto">
-          <div className="flex flex-wrap gap-3 justify-center">
-            {categories.map((category) => (
+          <div className="flex flex-wrap gap-4 justify-center">
+            {categories.map((category, index) => (
               <Badge
                 key={category}
                 variant={selectedCategory === category ? "default" : "outline"}
-                className="cursor-pointer px-6 py-2 text-sm"
+                className="cursor-pointer px-8 py-3 text-base hover-scale transition-all duration-300 animate-fade-in"
+                style={{ animationDelay: `${index * 100}ms` }}
                 onClick={() => setSelectedCategory(category)}
               >
                 {category}
@@ -66,25 +91,31 @@ const Menu = () => {
       </section>
 
       {/* Menu Items Grid */}
-      <section className="py-12 px-4">
+      <section className="py-16 px-4">
         <div className="max-w-6xl mx-auto">
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredItems.map((item) => (
-              <Card key={item.id} className="overflow-hidden hover:shadow-card-hover transition-all">
-                <div className="aspect-video bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
-                  {item.image_url ? (
-                    <img src={item.image_url} alt={item.name} className="w-full h-full object-cover" />
-                  ) : (
-                    <UtensilsCrossed className="h-16 w-16 text-primary/50" />
-                  )}
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {filteredItems.map((item, index) => (
+              <Card 
+                key={item.id} 
+                className="overflow-hidden hover:shadow-card-hover transition-all duration-500 hover:-translate-y-2 group animate-fade-in bg-card"
+                style={{ animationDelay: `${index * 100}ms` }}
+              >
+                <div className="aspect-video overflow-hidden bg-gradient-to-br from-primary/10 to-accent/10">
+                  <img 
+                    src={menuImages[item.name] || tajineImage}
+                    alt={item.name}
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                  />
                 </div>
                 <div className="p-6">
-                  <div className="flex justify-between items-start mb-2">
-                    <h3 className="text-xl font-semibold">{item.name}</h3>
-                    <Badge variant="secondary">{item.category}</Badge>
+                  <div className="flex justify-between items-start mb-3">
+                    <h3 className="text-2xl font-semibold">{item.name}</h3>
+                    <Badge variant="secondary" className="ml-2 px-3 py-1">
+                      {item.category}
+                    </Badge>
                   </div>
-                  <p className="text-muted-foreground mb-4">{item.description}</p>
-                  <p className="text-2xl font-bold text-primary">{item.price} DH</p>
+                  <p className="text-muted-foreground mb-6 leading-relaxed">{item.description}</p>
+                  <p className="text-3xl font-bold text-primary">{item.price} DH</p>
                 </div>
               </Card>
             ))}

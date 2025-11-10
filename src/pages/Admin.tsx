@@ -8,7 +8,23 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, LogOut } from "lucide-react";
+import { Plus, Pencil, Trash2, LogOut, Home } from "lucide-react";
+import { Link } from "react-router-dom";
+import tajineImage from "@/assets/tajine-poulet.jpg";
+import couscousImage from "@/assets/couscous-royal.jpg";
+import pastillaImage from "@/assets/pastilla.jpg";
+import hariraImage from "@/assets/harira.jpg";
+import theImage from "@/assets/the-menthe.jpg";
+import gazellImage from "@/assets/cornes-gazelle.jpg";
+
+const menuImages: Record<string, string> = {
+  'Tajine Poulet': tajineImage,
+  'Couscous Royal': couscousImage,
+  'Pastilla au Poulet': pastillaImage,
+  'Harira': hariraImage,
+  'Thé à la Menthe': theImage,
+  'Cornes de Gazelle': gazellImage,
+};
 import {
   Dialog,
   DialogContent,
@@ -188,14 +204,23 @@ const Admin = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="bg-hero-gradient py-8 px-4">
-        <div className="max-w-7xl mx-auto flex justify-between items-center">
-          <h1 className="text-4xl font-bold text-white">Panneau Admin</h1>
-          <Button variant="secondary" onClick={handleLogout}>
-            <LogOut className="mr-2 h-4 w-4" />
-            Déconnexion
-          </Button>
+    <div className="min-h-screen bg-gradient-to-b from-background to-secondary/30">
+      <div className="bg-hero-gradient py-10 px-4 shadow-lg">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex justify-between items-center mb-6">
+            <Link to="/">
+              <Button variant="ghost" className="text-white hover:bg-white/20">
+                <Home className="mr-2 h-4 w-4" />
+                Retour au Site
+              </Button>
+            </Link>
+            <Button variant="secondary" onClick={handleLogout} className="hover-scale">
+              <LogOut className="mr-2 h-4 w-4" />
+              Déconnexion
+            </Button>
+          </div>
+          <h1 className="text-5xl font-bold text-white animate-fade-in">Panneau Admin</h1>
+          <p className="text-white/90 text-xl mt-3 animate-fade-in animation-delay-200">Gérez votre menu en toute simplicité</p>
         </div>
       </div>
 
@@ -296,30 +321,45 @@ const Admin = () => {
           </Dialog>
         </div>
 
-        <div className="grid gap-4">
-          {menuItems.map((item) => (
-            <Card key={item.id} className="p-6">
-              <div className="flex justify-between items-start">
-                <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-2">
-                    <h3 className="text-xl font-semibold">{item.name}</h3>
-                    <span className={`px-2 py-1 rounded text-xs ${item.is_available ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                      {item.is_available ? 'Disponible' : 'Indisponible'}
-                    </span>
-                  </div>
-                  <p className="text-muted-foreground mb-2">{item.description}</p>
-                  <div className="flex gap-4 text-sm">
-                    <span className="font-semibold text-primary">{item.price} DH</span>
-                    <span className="text-muted-foreground">Catégorie: {item.category}</span>
-                  </div>
+        <div className="grid gap-6">
+          {menuItems.map((item, index) => (
+            <Card 
+              key={item.id} 
+              className="overflow-hidden hover:shadow-card-hover transition-all duration-300 animate-fade-in"
+              style={{ animationDelay: `${index * 50}ms` }}
+            >
+              <div className="flex flex-col md:flex-row">
+                <div className="md:w-48 h-48 bg-gradient-to-br from-primary/10 to-accent/10 overflow-hidden">
+                  <img 
+                    src={menuImages[item.name] || tajineImage}
+                    alt={item.name}
+                    className="w-full h-full object-cover"
+                  />
                 </div>
-                <div className="flex gap-2">
-                  <Button variant="outline" size="icon" onClick={() => handleEdit(item)}>
-                    <Pencil className="h-4 w-4" />
-                  </Button>
-                  <Button variant="destructive" size="icon" onClick={() => handleDelete(item.id)}>
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                <div className="flex-1 p-6">
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-3">
+                        <h3 className="text-2xl font-semibold">{item.name}</h3>
+                        <span className={`px-3 py-1 rounded-full text-sm font-medium ${item.is_available ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                          {item.is_available ? 'Disponible' : 'Indisponible'}
+                        </span>
+                      </div>
+                      <p className="text-muted-foreground mb-4 leading-relaxed">{item.description}</p>
+                      <div className="flex gap-6 text-base">
+                        <span className="font-bold text-primary text-xl">{item.price} DH</span>
+                        <span className="text-muted-foreground">📍 {item.category}</span>
+                      </div>
+                    </div>
+                    <div className="flex gap-2 ml-4">
+                      <Button variant="outline" size="icon" onClick={() => handleEdit(item)} className="hover-scale">
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button variant="destructive" size="icon" onClick={() => handleDelete(item.id)} className="hover-scale">
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
                 </div>
               </div>
             </Card>
