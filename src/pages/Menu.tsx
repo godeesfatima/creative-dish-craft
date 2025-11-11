@@ -110,7 +110,7 @@ const Menu = () => {
               >
                 <div className="aspect-video overflow-hidden bg-gradient-to-br from-primary/10 to-accent/10">
                   <img 
-                    src={menuImages[item.name] || tajineImage}
+                    src={item.image_url || menuImages[item.name] || tajineImage}
                     alt={item.name}
                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                   />
